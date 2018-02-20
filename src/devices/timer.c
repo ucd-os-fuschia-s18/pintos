@@ -29,6 +29,7 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
+static void wake_threads(struct thread *thr);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
@@ -89,11 +90,20 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
+   ASSERT (intr_get_level () == INTR_ON);
 
-  ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+	// Assign the sleep time requested to current thread //
+	thread_current()->sleep_ticks = ticks;
+
+	// Disable interrupts to allow thread blocking //
+	enum intr_level old_level = intr_disable();
+
+	// Block the current thread //
+	thread_block();
+
+	// Set old inter level used before current thread blocked //
+	// to prevent logic crashes //
+	intr_set_level(old_level);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -172,8 +182,29 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+	// Check each thread (if needs to wake up) after each tick //
+	// Assume interrupts are disabled since this func is an interrupt handler //
+	thread_foreach(wake_threads, 0);
 }
 
+/* Function: Wake up sleeping thread
+	Checks if sleep_ticks of thread reached 0
+	TRUE - unblock thread (Wake up thread)
+	Decrement sleep_ticks each time this func is called */
+static void wake_threads(struct thread *thr, void *aux) 
+{
+	if(thr->status == THREAD_BLOCKED) // Check if sleeping //
+	{
+		if(thr->sleep_ticks > 0) 
+		{
+			thr->sleep_ticks--;  // One tick has passed //
+			if(thr->sleep_ticks == 0)
+			{
+				thread_unblock(thr);  // Can wake up //
+			}
+		}
+	}
+}
 /* Returns true if LOOPS iterations waits for more than one timer
    tick, otherwise false. */
 static bool
