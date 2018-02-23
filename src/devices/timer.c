@@ -29,7 +29,6 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
-static void wake_threads(struct thread *thr);
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
@@ -184,27 +183,9 @@ timer_interrupt (struct intr_frame *args UNUSED)
   thread_tick ();
 	// Check each thread (if needs to wake up) after each tick //
 	// Assume interrupts are disabled since this func is an interrupt handler //
-	thread_foreach(wake_threads, 0);
+	thread_foreach(wakeUp_threads, 0);
 }
 
-/* Function: Wake up sleeping thread
-	Checks if sleep_ticks of thread reached 0
-	TRUE - unblock thread (Wake up thread)
-	Decrement sleep_ticks each time this func is called */
-static void wake_threads(struct thread *thr, void *aux) 
-{
-	if(thr->status == THREAD_BLOCKED) // Check if sleeping //
-	{
-		if(thr->sleep_ticks > 0) 
-		{
-			thr->sleep_ticks--;  // One tick has passed //
-			if(thr->sleep_ticks == 0)
-			{
-				thread_unblock(thr);  // Can wake up //
-			}
-		}
-	}
-}
 /* Returns true if LOOPS iterations waits for more than one timer
    tick, otherwise false. */
 static bool

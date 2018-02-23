@@ -70,6 +70,8 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+static void wakeUp_threads(struct thread *thr, void *aux); 
+
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -329,6 +331,25 @@ thread_foreach (thread_action_func *func, void *aux)
       struct thread *t = list_entry (e, struct thread, allelem);
       func (t, aux);
     }
+}
+
+/* Function: Wake up sleeping thread
+  Checks if sleep_ticks of thread reached 0
+  TRUE - unblock thread (Wake up thread)
+  Decrement sleep_ticks each time this func is called */
+static void wakeUp_threads(struct thread *thr, void *aux) 
+{
+  if(thr->status == THREAD_BLOCKED) // Check if sleeping //
+  {
+    if(thr->sleep_ticks > 0) 
+    {
+      thr->sleep_ticks--;  // One tick has passed //
+      if(thr->sleep_ticks == 0)
+      {
+        thread_unblock(thr);  // Can wake up //
+      }
+    }
+  }
 }
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
