@@ -70,7 +70,6 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-static void wakeUp_threads(struct thread *thr, void *aux); 
 
 
 /* Initializes the threading system by transforming the code
@@ -333,25 +332,6 @@ thread_foreach (thread_action_func *func, void *aux)
     }
 }
 
-/* Function: Wake up sleeping thread
-  Checks if sleep_ticks of thread reached 0
-  TRUE - unblock thread (Wake up thread)
-  Decrement sleep_ticks each time this func is called */
-static void wakeUp_threads(struct thread *thr, void *aux) 
-{
-  if(thr->status == THREAD_BLOCKED) // Check if sleeping //
-  {
-    if(thr->sleep_ticks > 0) 
-    {
-      thr->sleep_ticks--;  // One tick has passed //
-      if(thr->sleep_ticks == 0)
-      {
-        thread_unblock(thr);  // Can wake up //
-      }
-    }
-  }
-}
-
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) 
@@ -603,3 +583,14 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+// List_less_func Function for sorting sleeping threads in list by number of ticks //
+bool calculate_ticks (const struct list_elem *a,
+                      const struct list_elem *b, void *aux UNUSED) { 
+  struct thread *thread_a = list_entry(a, struct thread, elem);
+  struct thread *thread_b = list_entry(b, struct thread, elem);
+  if(thread_a->sleep_ticks < thread_b->sleep_ticks) {
+    return true;
+  }
+  else return false;
+}

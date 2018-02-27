@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
+#include <list.h>
 #include "devices/pit.h"
 #include "threads/interrupt.h"
 #include "threads/synch.h"
@@ -19,6 +20,8 @@
 
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
+
+static struct list sleep_list;  // Lists of sleeping threads //
 
 /* Number of loops per timer tick.
    Initialized by timer_calibrate(). */
@@ -91,17 +94,23 @@ timer_sleep (int64_t ticks)
 {
    ASSERT (intr_get_level () == INTR_ON);
 
-	// Assign the sleep time requested to current thread //
-	thread_current()->sleep_ticks = ticks;
+   // If zero or negative tick value, return immediately //
+   if(ticks <= 0) {
+      return;  
+   }
 
-	// Disable interrupts to allow thread blocking //
+	// Disable interrupts temporarily //
 	enum intr_level old_level = intr_disable();
+  // Sleep ticks = number of sleep ticks requested + ticks passed since OS booted //
+  thread_current()->sleep_ticks = ticks + timer_ticks();
+  // Order sleeping threads list by number of ticks in ascending order //
+  list_insert_ordered (&sleep_list, &thread_current()->elem,
+                          (list_less_func *) &calculate_ticks, NULL);
 
 	// Block the current thread //
 	thread_block();
 
 	// Set old inter level used before current thread blocked //
-	// to prevent logic crashes //
 	intr_set_level(old_level);
 }
 
@@ -174,16 +183,29 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
-
+
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
-	// Check each thread (if needs to wake up) after each tick //
-	// Assume interrupts are disabled since this func is an interrupt handler //
-	thread_foreach(wakeUp_threads, 0);
+	
+  // Get first element of sleep list //
+  struct list_elem *e = list_begin(&sleep_list);
+
+  // Loop through sleep list to see if any threads can be awakened //
+  while(e != list_end(&sleep_list)) {
+    // Get thread from list element //
+    struct thread *thr = list_entry(e, struct thread, elem);
+    // Check if enough ticks have passed for thread to be awake //
+    if(ticks < thr->sleep_ticks) {   
+      break;
+    }
+    list_remove(e);  // Remove from sleep list //
+    thread_unblock(thr);  // Unblock thread and add to ready list //
+    e = list_begin(&sleep_list);  // Next element on list to check //
+  }
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
