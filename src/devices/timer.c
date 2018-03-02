@@ -105,7 +105,7 @@ timer_sleep (int64_t ticks)
   thread_current()->sleep_ticks = ticks + timer_ticks();
   // Order sleeping threads list by number of ticks in ascending order //
   list_insert_ordered (&sleep_list, &thread_current()->elem,
-                          (list_less_func *) &calculate_ticks, NULL);
+                          (list_less_func *) calculate_ticks, NULL);
 
 	// Block the current thread //
 	thread_block();
@@ -206,6 +206,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
     thread_unblock(thr);  // Unblock thread and add to ready list //
     e = list_begin(&sleep_list);  // Next element on list to check //
   }
+  check_max_priority();  // Checks if the current thread has max priority //
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
