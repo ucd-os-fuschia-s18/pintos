@@ -8,7 +8,7 @@
 
 >> Fill in the names and email addresses of your group members.
 
-Serin Yu <email@domain.example>
+Serin Yu <se.yu@ucdenver.edu>
 Kellie Webber <kellie.webber@ucdenver.edu>
 Scott Nedvesky <scott.nedvesky@ucdenver.edu>
 
