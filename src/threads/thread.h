@@ -14,6 +14,12 @@ enum thread_status
     THREAD_DYING        /* About to be destroyed. */
   };
 
+  enum thread_blocked_status 
+  {
+    UNKNOWN,
+    SLEEPING
+  };
+
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
 typedef int tid_t;
@@ -80,6 +86,13 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+
+  struct thread_blocked
+  {
+    enum thread_blocked_status reason;
+    int64_t sleep_ticks;
+  };
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -93,9 +106,11 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-	 int64_t sleep_ticks;	// Time to sleep in ticks //
+	 //int64_t sleep_ticks;	// Time to sleep in ticks //
+    struct thread_blocked blocked;  // Need to know when to unblock thread //
 
-   int initial_priority;  // Original priority of thread before donations //
+   // PRIORITY //
+   int init_priority;  // Original priority of thread before donations //
    struct lock *waiting_lock;  // Lock the thread is waiting on //
    struct list donations_list;  // List of donors - threads waiting for lock //
    struct list_elem donation_elem;  // Thread can be added to another thread's donations list //
@@ -108,6 +123,7 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
+
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -145,10 +161,13 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
-bool calculate_ticks (const struct list_elem *a,
-                      const struct list_elem *b, void *aux UNUSED);
+void sleep_until (int64_t ticks);
+
 bool order_thread_priority (const struct list_elem *a,
                       const struct list_elem *b, void *aux UNUSED);
 void check_max_priority (void);
+void remove_donors(struct lock *lock);
+void redo_priority(void);
+void donate_priority(struct lock *lock);
 
 #endif /* threads/thread.h */

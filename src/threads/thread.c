@@ -4,6 +4,7 @@
 #include <random.h>
 #include <stdio.h>
 #include <string.h>
+#include "devices/timer.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
@@ -27,6 +28,8 @@ static struct list ready_list;
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
+
+static struct list sleep_list;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -69,7 +72,12 @@ static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
-static tid_t allocate_tid (void);  
+static tid_t allocate_tid (void);
+
+// Alarm Clock //
+bool calculate_ticks (const struct list_elem *a,
+                      const struct list_elem *b, void *aux UNUSED);  
+static void try_wake_thread(void);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -134,6 +142,8 @@ thread_tick (void)
   else
     kernel_ticks++;
 
+  try_wake_thread();
+
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
@@ -171,6 +181,7 @@ thread_create (const char *name, int priority,
   struct switch_entry_frame *ef;
   struct switch_threads_frame *sf;
   tid_t tid;
+  enum intr_level old_level;
 
   ASSERT (function != NULL);
 
@@ -182,6 +193,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
+
+  old_level = intr_disable();
 
   /* Stack frame for kernel_thread(). */
   kf = alloc_frame (t, sizeof *kf);
@@ -198,10 +211,12 @@ thread_create (const char *name, int priority,
   sf->eip = switch_entry;
   sf->ebp = 0;
 
+  intr_set_level(old_level);
+
   /* Add to run queue. */
   thread_unblock (t);
 
-  if (thread_get_priority() < priority) {
+  if (thread_current()->priority < priority) {
     thread_yield();
   }
 
@@ -349,10 +364,7 @@ thread_set_priority (int new_priority)
 int
 thread_get_priority (void) 
 {
-  enum intr_level old_level = intr_disable();
-  int temp = thread_current()->priority;
-  intr_set_level(old_level);
-  return temp;
+  return thread_current()->priority;
 }
 
 /* Sets the current thread's nice value to NICE. */
@@ -473,6 +485,11 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+
+  // Priority donations //
+  t->init_priority = priority;
+  t->waiting_lock = NULL;
+  list_init(&t->donations_list);
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
@@ -602,10 +619,43 @@ bool calculate_ticks (const struct list_elem *a,
                       const struct list_elem *b, void *aux UNUSED) { 
   struct thread *thread_a = list_entry(a, struct thread, elem);
   struct thread *thread_b = list_entry(b, struct thread, elem);
-  if(thread_a->sleep_ticks < thread_b->sleep_ticks) {
+  if(thread_a->blocked.sleep_ticks < thread_b->blocked.sleep_ticks) {
     return true;
   }
-  else return false;
+  return false;
+}
+
+static void try_wake_thread(void) {
+  int64_t ticks = timer_ticks();
+  while(true) {
+    if (list_empty(&sleep_list))
+      return;
+    struct thread *thr = list_entry(list_front(&sleep_list),
+                                    struct thread, elem);
+    if(thr->blocked.sleep_ticks > ticks) 
+      return;  // Sleep list sorted by ascending ticks //
+    list_pop_front(&sleep_list);
+    thread_unblock(thr);
+  }
+}
+
+void sleep_until (int64_t ticks) {
+  struct thread *cur = thread_current ();
+  enum intr_level old_level;
+
+  ASSERT (!intr_context ());
+
+  old_level = intr_disable ();
+  cur->status = THREAD_BLOCKED;
+  cur->blocked.reason = SLEEPING;
+  cur->blocked.sleep_ticks = ticks;
+
+  if (cur != idle_thread) {
+    list_insert_ordered(&sleep_list, &cur->elem, calculate_ticks, NULL);
+  }
+
+  schedule ();
+  intr_set_level (old_level);
 }
 
 // List_less_func Function for sorting threads by Highest to lowest priority //
@@ -641,3 +691,46 @@ void check_max_priority (void) {
   }
 }
 
+void donate_priority(struct lock *lock) {
+  //enum intr_level old_level = intr_disable();
+
+  lock->holder->priority = thread_current()->priority;
+  list_push_back (&lock->holder->donations_list, 
+                  &thread_current()->donation_elem);
+  thread_current()->waiting_lock = lock;
+  //list_remove(&thread_current()->elem);
+
+  //intr_set_level(old_level);
+}
+
+// Removes all threads in donations list waiting with this lock //
+void remove_donors(struct lock *lock) {
+  struct list_elem *e = list_begin(&thread_current()->donations_list);
+  struct list_elem *next;
+
+  // Remove donors waiting for this lock from lock holder's list //
+  while (e != list_end(&thread_current()->donations_list)) {
+    struct thread *thr = list_entry(e, struct thread, donation_elem);
+    next = list_next(e);
+
+    if(thr->waiting_lock == lock) {
+      list_remove(e);
+    }
+    e = next;
+  }
+}
+
+void redo_priority(void) {
+  struct thread *cur = thread_current();
+  cur->priority = cur->init_priority; // original priority //
+
+  if(list_empty(&cur->donations_list)) {
+    return;  // NO more donors //
+  }
+  struct thread *max = list_entry(list_max (&cur->donations_list, 
+                                    order_thread_priority, NULL),
+                                    struct thread, elem);
+  if(cur->priority < max->priority) {
+    cur->priority = max->priority;  // Next donation //
+  }
+}
