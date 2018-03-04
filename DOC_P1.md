@@ -32,7 +32,7 @@ In timer.c:
 
 In thread.h:
 
-`int64_t ticks` - this value determines how long a thread is sleeping for and 
+`int64_t sleep_ticks` - this value determines how long a thread is sleeping for and 
 when it should be unblocked
 
 
@@ -42,20 +42,20 @@ when it should be unblocked
 including the effects of the timer interrupt handler.**
 
 First, the function checks that the 'ticks' argument is a positive number. 
-Next, this number is added to the global ticks value and passed into the 
-thread_sleep_until() function. Here, the current thread is blocked and set 
-to wake up after ticks. The sleeping thread's information is inserted into 
-the sleeping thread list and the next thread is scheduled. 
-The timer interrupt handler get's the list_front and checks if the thread's
-ticks value is less than the global ticks. If it is, the thread is removed
-from the sleep list and unblocked. This is repeated until the sleep list
-is empty.
+Next, the thread's number of ticks to sleep is set by adding the global ticks value
+(since OS booted) with the requested number of ticks.  
+The sleeping thread is inserted into the sleeping thread list in sorted order
+by ascending tick values and is blocked so that the next thread can run.
+The timer interrupt handler checks if the first thread in the sleep list has a
+tick value less than the global ticks. If it is, the thread is removed
+from the sleep list and unblocked. This is repeated until all the threads
+in the list that can wake up is unblocked and added to the ready list.
 
 **A3: What steps are taken to minimize the amount of time spent in
 the timer interrupt handler?**
 
 The sleep list is sorted. By doing this, the interrupt handler doesn't 
-have to travrse the entire list at every interrupt. 
+have to travrse the entire list at every interrupt (efficient). 
 
 ### SYNCHRONIZATION 
 
