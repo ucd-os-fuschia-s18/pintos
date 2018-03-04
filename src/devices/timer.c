@@ -10,12 +10,18 @@
   
 /* See [8254] for hardware details of the 8254 timer chip. */
 
+// Used for BSD scheduler
+#define RECALC_FREQ 4
+
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
 #endif
 #if TIMER_FREQ > 1000
 #error TIMER_FREQ <= 1000 recommended
 #endif
+
+// Sleeping threads list //
+static struct list sleep_list;
 
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
@@ -37,6 +43,7 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+  list_init(&sleep_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -87,15 +94,22 @@ timer_elapsed (int64_t then)
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void
-timer_sleep (int64_t ticks) 
+timer_sleep (int64_t ticks)
 {
-  if (ticks <= 0)
-    return;
-
-  int64_t start = timer_ticks ();
-
   ASSERT (intr_get_level () == INTR_ON);
-  sleep_until(start + ticks);
+  if (ticks <= 0)
+    {
+      return;
+    }
+
+  enum intr_level old_level = intr_disable ();
+
+  thread_current()->sleep_ticks = timer_ticks() + ticks;
+  list_insert_ordered(&sleep_list, &thread_current()->elem,
+                                calculate_ticks, NULL);
+  thread_block();
+
+  intr_set_level(old_level);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -167,6 +181,7 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
+
 
 /* Timer interrupt handler. */
 static void
@@ -174,6 +189,19 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+
+  struct list_elem *e = list_begin(&sleep_list);
+  while (e != list_end(&sleep_list))
+    {
+      struct thread *t = list_entry(e, struct thread, elem);      
+      if (ticks < t->sleep_ticks)
+        break;
+
+      list_remove(e); // remove from sleep list
+      thread_unblock(t); // Unblock and add to ready list
+      e = list_begin(&sleep_list);
+    }
+  check_max_priority(); // Tests if thread still has max priority
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

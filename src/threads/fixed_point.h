@@ -78,4 +78,3 @@ int div_mixed(int x, int n)
 {
   return x / n;
 }
-

@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -12,12 +13,6 @@ enum thread_status
     THREAD_READY,       /* Not running but ready to run. */
     THREAD_BLOCKED,     /* Waiting for an event to trigger. */
     THREAD_DYING        /* About to be destroyed. */
-  };
-
-  enum thread_blocked_status 
-  {
-    UNKNOWN,
-    SLEEPING
   };
 
 /* Thread identifier type.
@@ -86,13 +81,6 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
-
-  struct thread_blocked
-  {
-    enum thread_blocked_status reason;
-    int64_t sleep_ticks;
-  };
-
 struct thread
   {
     /* Owned by thread.c. */
@@ -103,17 +91,22 @@ struct thread
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
 
-    /* Shared between thread.c and synch.c. */
+    /* Shared between thread.c and synch.c.
+       Used in ready and sleep lists */
     struct list_elem elem;              /* List element. */
 
-	 //int64_t sleep_ticks;	// Time to sleep in ticks //
-    struct thread_blocked blocked;  // Need to know when to unblock thread //
+    // Alarm Clock //
+    int64_t sleep_ticks;
 
-   // PRIORITY //
-   int init_priority;  // Original priority of thread before donations //
-   struct lock *waiting_lock;  // Lock the thread is waiting on //
-   struct list donations_list;  // List of donors - threads waiting for lock //
-   struct list_elem donation_elem;  // Thread can be added to another thread's donations list //
+    // Priority Scheduling //
+    int init_priority;
+    struct lock *waiting_lock;
+    struct list donations_list;
+    struct list_elem donation_elem;
+
+    /* Used for FreeBSD scheduling */
+    //int nice;
+    //int recent_cpu;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -123,7 +116,6 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
-
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -161,13 +153,17 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
-void sleep_until (int64_t ticks);
-
+/* Added functions */
+bool calculate_ticks (const struct list_elem *a,
+    const struct list_elem *b,
+    void *aux UNUSED);
 bool order_thread_priority (const struct list_elem *a,
-                      const struct list_elem *b, void *aux UNUSED);
+       const struct list_elem *b,
+       void *aux UNUSED);
 void check_max_priority (void);
-void remove_donors(struct lock *lock);
-void redo_priority(void);
-void donate_priority(struct lock *lock);
+
+void donate_priority (void);
+void remove_donors (struct lock *lock);
+void update_priority (void);
 
 #endif /* threads/thread.h */
