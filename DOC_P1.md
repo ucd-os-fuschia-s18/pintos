@@ -35,21 +35,31 @@ Scott Nedvesky <scott.nedvesky@ucdenver.edu>
 >> A2: Briefly describe what happens in a call to timer_sleep(),
 >> including the effects of the timer interrupt handler.
 
+Once timer_sleep() is called, it suspends the execution of the calling thread for a set # of 'X' ticks. The purpose of the timer interupt handler is to constantly monitor and update threads as needed depending on whether or not they have been asleep for a specific amount of time. Once it has, it throws it back into the ready list. 
+
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
+
+So instead of analyzing every thread, it only inspects those that are currently asleep. This greatly reduces the amount of time spent in the interrupt handler.
 
 ---- SYNCHRONIZATION ----
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
 
+Once timer_sleep is called, Interrupts are temporarily disabled not allowing for multiple threads to be put to sleep or affected at the same time.
+
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
+
+Once a timer interrupt occurs, additional interrupts are dissabled at the that time therefore making it impossible for a race condition to occur.
 
 ---- RATIONALE ----
 
 >> A6: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+
+This happened to be the most ideal design when considering all aspects of this. The final decision came down to a matter of time. Going throught a list of those asleep versus traversing the entire list of all, it greatly reduces the amount of time needed to perform the given task.
 
 			 PRIORITY SCHEDULING
 			 ===================
@@ -63,6 +73,8 @@ Scott Nedvesky <scott.nedvesky@ucdenver.edu>
 >> B2: Explain the data structure used to track priority donation.
 >> Use ASCII art to diagram a nested donation.  (Alternately, submit a
 >> .png file.)
+
+
 
 ---- ALGORITHMS ----
 
