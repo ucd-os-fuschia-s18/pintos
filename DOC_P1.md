@@ -1,9 +1,17 @@
-			+--------------------+
-			| PINTOS             |
-			| PROJECT 1: THREADS |
-			| DESIGN DOCUMENT    |
-			+--------------------+
-				   
+
+<h1 align="center"> PINTOS</h1>
+<h2 align="center"> PROJECT 1: THREADS</h2> 
+<h3 align="center"> DESIGN DOCUMENT</h3>
+
+				
+
+
+
+
+
+
+
+
 ### GROUP
 
 Serin Yu | <se.yu@ucdenver.edu>
@@ -18,7 +26,7 @@ Online sources:
 
 http://stuartharrell.com/blog/2016/12/16/efficient-alarm-clock/
 
-## ALARM CLOCK
+<h2 align="center"> ALARM CLOCK </h2>
 
 ### DATA STRUCTURES 
 
@@ -28,11 +36,11 @@ enumeration.  Identify the purpose of each in 25 words or less.**
 
 In timer.c:
 
-static struct list sleep_list - this list keeps track of sleeping threads 
+`static struct list sleep_list` - this list keeps track of sleeping threads 
 
 In thread.h:
 
-int64_t ticks - this value determines how long a thread is sleeping for and 
+`int64_t ticks` - this value determines how long a thread is sleeping for and 
 when it should be unblocked
 
 
@@ -83,7 +91,7 @@ CPU cycles could be used to schedule non-sleeping threads.
 
 
 
-## PRIORITY SCHEDULING
+<h2 align="center"> PRIORITY SCHEDULING </h2>
 
 
 ### DATA STRUCTURES 
@@ -92,15 +100,15 @@ CPU cycles could be used to schedule non-sleeping threads.
 `struct` member, global or static variable, `typedef`, or
 enumeration.  Identify the purpose of each in 25 words or less.**
 
-The folowing members were added to *struct* thread:
+The folowing members were added to `struct thread`:
 
-int init_priority - the priority of the thread
+`int init_priority` - the priority of the thread
 
-struct lock *waiting_lock - lock that a thread is waiting on
+`struct lock *waiting_lock` - lock that a thread is waiting on
 
-struct list donations_list - list of threads waiting on locks 
+`struct list donations_list` - list of threads waiting on locks 
 
-struct list_elem donation_elem - element that can be added to another thread's donations list 
+`struct list_elem donation_elem` - element that can be added to another thread's donations list 
 
 **B2: Explain the data structure used to track priority donation.
 Use ASCII art to diagram a nested donation.  (Alternately, submit a
