@@ -21,14 +21,14 @@ main ()
         
         cd build
         
-        #alarm_single
-         #alarm_multiple
-         #alarm-simultaneous
-        #alarm-priority
-         #alarm-zero
-         #alarm-negative
+        alarm_single
+         alarm_multiple
+         alarm-simultaneous
+         alarm-priority
+         alarm-zero
+         alarm-negative
         
-        priority-change
+         priority-change
          priority-donate-one
          priority-donate-multiple
          priority-donate-multiple2
@@ -37,19 +37,19 @@ main ()
          priority-donate-lower
          priority-fifo
          priority-preempt
-        priority-sema
+         priority-sema
          priority-condvar 
          priority-donate-chain
         
-         #mlfqs-load-1
-         #mlfqs-load-60
-         #mlfqs-load-avg
-         #mlfqs-recent-1
-         #mlfqs-fair-2
-         #mlfqs-fair-20
-         #mlfqs-nice-2
-         #mlfqs-nice-10
-        # mlfqs-block
+         mlfqs-load-1
+         mlfqs-load-60
+         mlfqs-load-avg
+         mlfqs-recent-1
+         mlfqs-fair-2
+        mlfqs-fair-20
+         mlfqs-nice-2
+         mlfqs-nice-10
+         mlfqs-block
         
         echo -e "\n   SCRIPT EXECUTION TERMINATED SUCCESSFULLY. \n"
     else 
