@@ -30,6 +30,8 @@ Scott Nedvesky <scott.nedvesky@ucdenver.edu>
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+
+
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe what happens in a call to timer_sleep(),
@@ -76,13 +78,19 @@ This happened to be the most ideal design when considering all aspects of this. 
 
 
 
+
+
 ---- ALGORITHMS ----
 
 >> B3: How do you ensure that the highest priority thread waiting for
 >> a lock, semaphore, or condition variable wakes up first?
 
+The way the threads are entered into the waiting list is based upon priority to begin with. So when activity occurs with either a lock or semaphore, we check for the one with the highest priority and bump them from the waiting list. The same exact thing occurs with a conditional variable as well. 
+
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
+
+
 
 >> B5: Describe the sequence of events when lock_release() is called
 >> on a lock that a higher-priority thread is waiting for.
