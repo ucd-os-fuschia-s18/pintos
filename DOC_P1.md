@@ -3,14 +3,6 @@
 <h2 align="center"> PROJECT 1: THREADS</h2> 
 <h3 align="center"> DESIGN DOCUMENT</h3>
 
-				
-
-
-
-
-
-
-
 
 ### GROUP
 
@@ -83,7 +75,7 @@ the thread does not sleep, thus, avoiding race conditions.
 **A6: Why did you choose this design?  In what ways is it superior to
 another design you considered?**
 
-The previous implementation of timer_sleep() called thread_yield()in a loop.
+The previous implementation of timer_sleep() called thread_yield() in a loop.
 By doing this, there was nothing preventing a thread from being scheduled 
 again even though it could still be sleeping. By implementing our design,
 we were able to avoid busy waiting by blocking the sleeping thread so that
@@ -122,8 +114,13 @@ Use ASCII art to diagram a nested donation.  (Alternately, submit a
 **B3: How do you ensure that the highest priority thread waiting for
 a lock, semaphore, or condition variable wakes up first?**
 
+
+
 **B4: Describe the sequence of events when a call to lock_acquire()
 causes a priority donation.  How is nested donation handled?**
+
+1) The current thread's waiting lock value is set to *lock*
+2) The thread is added to the lock holder's donations list 
 
 **B5: Describe the sequence of events when lock_release() is called
 on a lock that a higher-priority thread is waiting for.**
