@@ -682,8 +682,6 @@ void donate_priority (void)
 
     if (lock->holder->priority < t->priority) {
       lock->holder->priority = t->priority;  // Donate priority //
-      t = lock->holder;
-      lock = t->waiting_lock;
     }
   }
 }
