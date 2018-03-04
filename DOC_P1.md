@@ -4,31 +4,26 @@
 			| DESIGN DOCUMENT    |
 			+--------------------+
 				   
----- GROUP ----
+### GROUP
 
-Serin Yu <se.yu@ucdenver.edu>
+Serin Yu | <se.yu@ucdenver.edu>
 
-Kelli Webber <kelli.webber@ucdenver.edu>
+Kelli Webber | <kelli.webber@ucdenver.edu>
 
-Scott Nedvesky <scott.nedvesky@ucdenver.edu>
+Scott Nedvesky | <scott.nedvesky@ucdenver.edu>
 
----- PRELIMINARIES ----
-
-**Please cite any offline or online sources you consulted while
-preparing your submission, other than the Pintos documentation, course
-text, lecture notes, and course staff.**
+### PRELIMINARIES 
 
 Online sources:
 
 http://stuartharrell.com/blog/2016/12/16/efficient-alarm-clock/
 
-			     ALARM CLOCK
-			     ===========
+## ALARM CLOCK
 
----- DATA STRUCTURES ----
+### DATA STRUCTURES 
 
-**A1: Copy here the declaration of each new or changed `struct' or
-`struct' member, global or static variable, `typedef', or
+**A1: Copy here the declaration of each new or changed `struct` or
+`struct` member, global or static variable, `typedef`, or
 enumeration.  Identify the purpose of each in 25 words or less.**
 
 In timer.c:
@@ -41,7 +36,7 @@ int64_t ticks - this value determines how long a thread is sleeping for and
 when it should be unblocked
 
 
----- ALGORITHMS ----
+### ALGORITHMS 
 
 **A2: Briefly describe what happens in a call to timer_sleep(),
 including the effects of the timer interrupt handler.**
@@ -62,7 +57,7 @@ the timer interrupt handler?**
 The sleep list is sorted. By doing this, the interrupt handler doesn't 
 have to travrse the entire list at every interrupt. 
 
----- SYNCHRONIZATION ----
+### SYNCHRONIZATION 
 
 **A4: How are race conditions avoided when multiple threads call
 timer_sleep() simultaneously?**
@@ -75,7 +70,7 @@ during a call to timer_sleep()?**
 Since timer_sleep() checks that the ticks value is valid and if not,
 the thread does not sleep, thus, avoiding race conditions. 
 
----- RATIONALE ----
+### RATIONALE 
 
 **A6: Why did you choose this design?  In what ways is it superior to
 another design you considered?**
@@ -88,13 +83,13 @@ CPU cycles could be used to schedule non-sleeping threads.
 
 
 
-			 PRIORITY SCHEDULING
-			 ===================
+## PRIORITY SCHEDULING
 
----- DATA STRUCTURES ----
 
-**B1: Copy here the declaration of each new or changed `struct' or
-`struct' member, global or static variable, `typedef', or
+### DATA STRUCTURES 
+
+**B1: Copy here the declaration of each new or changed `struct` or
+`struct` member, global or static variable, `typedef`, or
 enumeration.  Identify the purpose of each in 25 words or less.**
 
 The folowing members were added to *struct* thread:
@@ -105,9 +100,7 @@ struct lock *waiting_lock - lock that a thread is waiting on
 
 struct list donations_list - list of threads waiting on locks 
 
-struct list_elem donation_elem - element that can be added to another 
-
-thread's donations list 
+struct list_elem donation_elem - element that can be added to another thread's donations list 
 
 **B2: Explain the data structure used to track priority donation.
 Use ASCII art to diagram a nested donation.  (Alternately, submit a
@@ -116,7 +109,7 @@ Use ASCII art to diagram a nested donation.  (Alternately, submit a
 
 
 
----- ALGORITHMS ----
+### ALGORITHMS 
 
 **B3: How do you ensure that the highest priority thread waiting for
 a lock, semaphore, or condition variable wakes up first?**
@@ -127,13 +120,13 @@ causes a priority donation.  How is nested donation handled?**
 **B5: Describe the sequence of events when lock_release() is called
 on a lock that a higher-priority thread is waiting for.**
 
----- SYNCHRONIZATION ----
+### SYNCHRONIZATION 
 
 **B6: Describe a potential race in thread_set_priority() and explain
 how your implementation avoids it.  Can you use a lock to avoid
 this race?**
 
----- RATIONALE ----
+### RATIONALE 
 
 **B7: Why did you choose this design?  In what ways is it superior to
 another design you considered?**
