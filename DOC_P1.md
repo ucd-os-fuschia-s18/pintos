@@ -38,7 +38,7 @@ when it should be unblocked
 
 ### ALGORITHMS 
 
-**A2: Briefly describe what happens in a call to timer_sleep(),
+**A2: Briefly describe what happens in a call to `timer_sleep()`,
 including the effects of the timer interrupt handler.**
 
 First, the function checks that the 'ticks' argument is a positive number. 
@@ -60,14 +60,14 @@ have to traverse the entire list at every interrupt (efficient).
 ### SYNCHRONIZATION 
 
 **A4: How are race conditions avoided when multiple threads call
-timer_sleep() simultaneously?**
+`timer_sleep()` simultaneously?**
 
-Interrupts are temporarily disabled in timer_sleep().
+Interrupts are temporarily disabled in `timer_sleep()`.
 
 **A5: How are race conditions avoided when a timer interrupt occurs
 during a call to timer_sleep()?**
 
-Since timer_sleep() checks that the ticks value is valid and if not,
+Since `timer_sleep()` checks that the ticks value is valid and if not,
 the thread does not sleep, thus, avoiding race conditions. 
 
 ### RATIONALE 
@@ -75,7 +75,7 @@ the thread does not sleep, thus, avoiding race conditions.
 **A6: Why did you choose this design?  In what ways is it superior to
 another design you considered?**
 
-The previous implementation of timer_sleep() called thread_yield() in a loop.
+The previous implementation of `timer_sleep()` called `thread_yield()` in a loop.
 By doing this, there was nothing preventing a thread from being scheduled 
 again even though it could still be sleeping. By implementing our design,
 we were able to avoid busy waiting by blocking the sleeping thread so that
@@ -116,14 +116,16 @@ a lock, semaphore, or condition variable wakes up first?**
 
 The list of waiters is sorted by priority (the highest being at the front). This is the one that will be unblocked first. 
 
-**B4: Describe the sequence of events when a call to lock_acquire()
+**B4: Describe the sequence of events when a call to `lock_acquire()`
 causes a priority donation.  How is nested donation handled?**
 
 1) The current thread's waiting lock value is set to *lock*
 2) The thread is added to the lock holder's donations list 
-3) `sema_down()` is called
+3) `sema_down()` is called and while SEMA's value is zero, we call `donate_priority`
+4) While the lock exists, check if lock holder is NULL (return if it is)
+5) Otherwise, set the lock holder's priority to the thread's priority (donate priority)
 
-**B5: Describe the sequence of events when lock_release() is called
+**B5: Describe the sequence of events when `lock_release()` is called
 on a lock that a higher-priority thread is waiting for.**
 
 1) The lock holder is set to NULL
@@ -134,9 +136,15 @@ on a lock that a higher-priority thread is waiting for.**
 
 ### SYNCHRONIZATION 
 
-**B6: Describe a potential race in thread_set_priority() and explain
+**B6: Describe a potential race in `thread_set_priority()` and explain
 how your implementation avoids it.  Can you use a lock to avoid
 this race?**
+
+A potential race in `thread_set_priority()` could occur if the thread priority variable is 
+being updated while the interrupt handler is writing to the priority variable. 
+
+To avoid this, we temporarily disabled interrupts in `thread_set_priority()`. We could not
+use a lock to avoid this race because the interrupt handler can't acquire locks. 
 
 ### RATIONALE 
 
