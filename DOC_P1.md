@@ -151,7 +151,7 @@ use a lock to avoid this race because the interrupt handler can't acquire locks.
 **B7: Why did you choose this design?  In what ways is it superior to
 another design you considered?**
  
-We chose this design because it allowed for an easy way to utilize the linked list implementation.  
+We chose this design because it allowed for an easy way to utilize the linked list implementation. This allowed for higher efficiency than if each thread had a list of acquired locks. 
 Also, at first we considered a design that implied the Pintos default scheduler runs in priority order. This needed to be altered due to the round-robin order that is actually used by the default scheduler. 
 
 
