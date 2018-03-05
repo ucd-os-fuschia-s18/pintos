@@ -114,7 +114,7 @@ Use ASCII art to diagram a nested donation.  (Alternately, submit a
 **B3: How do you ensure that the highest priority thread waiting for
 a lock, semaphore, or condition variable wakes up first?**
 
-
+The way the threads are entered into the waiting list is based upon priority to begin with. So when activity occurs with either a lock or semaphore, we check for the one with the highest priority and bump them from the waiting list. The same exact thing occurs with a conditional variable as well. 
 
 **B4: Describe the sequence of events when a call to lock_acquire()
 causes a priority donation.  How is nested donation handled?**
