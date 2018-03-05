@@ -6,17 +6,17 @@
 
 ### GROUP
 
-Serin Yu | <se.yu@ucdenver.edu>
+Serin Yu 
 
-Kelli Webber | <kelli.webber@ucdenver.edu>
-
-Scott Nedvesky | <scott.nedvesky@ucdenver.edu>
+Kelli Webber 
 
 ### PRELIMINARIES 
 
 Online sources:
 
 http://stuartharrell.com/blog/2016/12/16/efficient-alarm-clock/
+http://math.hws.edu/eck/cs431/f16/assg5/index.html
+https://piazza-resources.s3.amazonaws.com/hy3he23rv774we/hzybit6qm196x3/Lecture_06__Project1_Dicsussion.pdf?AWSAccessKeyId=AKIAIEDNRLJ4AZKBW6HA&Expires=1520240645&Signature=0ErWQ1%2BbOghW2mWsIyr55xahbYE%3D
 
 <h2 align="center"> ALARM CLOCK </h2>
 
