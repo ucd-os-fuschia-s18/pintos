@@ -106,7 +106,7 @@ The folowing members were added to `struct thread`:
 Use ASCII art to diagram a nested donation.  (Alternately, submit a
 .png file.)**
 
-
+![alt text](https://github.com/ucd-os-fuschia-s18/pintos/blob/master/diagram.png "Logo Title Text 1")
 
 
 ### ALGORITHMS 
