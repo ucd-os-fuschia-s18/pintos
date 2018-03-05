@@ -55,14 +55,14 @@ in the list that can wake up is unblocked and added to the ready list.
 the timer interrupt handler?**
 
 The sleep list is sorted. By doing this, the interrupt handler doesn't 
-have to travrse the entire list at every interrupt (efficient). 
+have to traverse the entire list at every interrupt (efficient). 
 
 ### SYNCHRONIZATION 
 
 **A4: How are race conditions avoided when multiple threads call
 timer_sleep() simultaneously?**
 
-Interrupts are temporarily diabled in timer_sleep().
+Interrupts are temporarily disabled in timer_sleep().
 
 **A5: How are race conditions avoided when a timer interrupt occurs
 during a call to timer_sleep()?**
@@ -92,7 +92,7 @@ CPU cycles could be used to schedule non-sleeping threads.
 `struct` member, global or static variable, `typedef`, or
 enumeration.  Identify the purpose of each in 25 words or less.**
 
-The folowing members were added to `struct thread`:
+The following members were added to `struct thread`:
 
 `int init_priority` - the priority of the thread
 
@@ -106,7 +106,7 @@ The folowing members were added to `struct thread`:
 Use ASCII art to diagram a nested donation.  (Alternately, submit a
 .png file.)**
 
-![alt text](https://github.com/ucd-os-fuschia-s18/pintos/blob/master/diagram.png "Logo Title Text 1")
+![alt text](https://github.com/ucd-os-fuschia-s18/pintos/blob/master/diagram.png)
 
 
 ### ALGORITHMS 
@@ -114,16 +114,23 @@ Use ASCII art to diagram a nested donation.  (Alternately, submit a
 **B3: How do you ensure that the highest priority thread waiting for
 a lock, semaphore, or condition variable wakes up first?**
 
-
+The list of waiters is sorted by priority (the highest being at the front). This is the one that will be unblocked first. 
 
 **B4: Describe the sequence of events when a call to lock_acquire()
 causes a priority donation.  How is nested donation handled?**
 
 1) The current thread's waiting lock value is set to *lock*
 2) The thread is added to the lock holder's donations list 
+3) `sema_down()` is called
 
 **B5: Describe the sequence of events when lock_release() is called
 on a lock that a higher-priority thread is waiting for.**
+
+1) The lock holder is set to NULL
+2) All donors waiting for released lock are removed 
+3) The current thread priority is updated
+4) `sema_up()` is called and the thread with the highest priority is unblocked
+5) Newly unblocked thread's priority is checked - if not the highest, yields
 
 ### SYNCHRONIZATION 
 
