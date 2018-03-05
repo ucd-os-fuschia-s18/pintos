@@ -20,7 +20,7 @@
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
-
+#define DEPTH_MAX 8
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
@@ -658,9 +658,9 @@ void check_max_priority (void)
   if (intr_context())  // If called from interrupt handler //
     {
       thread_ticks++;  // Ticks since last yield //
-      if (thread_current()->priority < t->priority) // ||
-     //(thread_ticks >= TIME_SLICE &&
-      //thread_current()->priority == t->priority)) 
+      if (thread_current()->priority < t->priority  || 
+        (thread_ticks >= TIME_SLICE &&
+      thread_current()->priority == t->priority))
       {
         intr_yield_on_return();
       } 
@@ -676,17 +676,24 @@ void check_max_priority (void)
 // Donate priority to lock holder thread //
 void donate_priority (void)
 {
+  int nest_depth = 0;
   struct thread *t = thread_current();
   struct lock *lock = t->waiting_lock;
 
-  while(lock != NULL) 
+  while(lock && nest_depth < DEPTH_MAX) 
   {
+    nest_depth++;
     // If lock is not being held //
     if (lock->holder == NULL)
       return;
 
+    if(lock->holder->priority >= t->priority)
+      return;
+
     if (lock->holder->priority < t->priority) {
       lock->holder->priority = t->priority;  // Donate priority //
+      t = lock->holder;
+      lock = t->waiting_lock;
     }
   } 
 }

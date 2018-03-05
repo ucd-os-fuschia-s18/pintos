@@ -393,13 +393,13 @@ bool check_sema_priority (const struct list_elem *a,
   struct semaphore_elem *sema_a = list_entry(a, struct semaphore_elem, elem);
   struct semaphore_elem *sema_b = list_entry(b, struct semaphore_elem, elem);
   
-  if (list_empty(&sema_a->semaphore.waiters))
-    {
-      return false;
-    }
   if (list_empty(&sema_b->semaphore.waiters))
     {
       return true;
+    }
+  if (list_empty(&sema_a->semaphore.waiters))
+    {
+      return false;
     }
 
   // Sort by higher priority //
