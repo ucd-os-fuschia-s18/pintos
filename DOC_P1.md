@@ -10,6 +10,8 @@ Serin Yu
 
 Kelli Webber 
 
+Scott Nedvesky
+
 ### PRELIMINARIES 
 
 Online sources:
